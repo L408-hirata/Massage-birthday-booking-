@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>massage</title>
+    <style>
+        :root {
+            --pink-bg: #e6f9ff; /* Light blue accent like the outer border in the image */
+            --calendar-pink: #fff0f5; /* Light pink background for the calendar */
+            --header-pink: #ffb6c1; /* Header pink */
+            --border-dark: #222;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f7f9fa;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 5px;
+            text-transform: lowercase;
+        }
+
+        .decorative-heart {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        /* View Switching */
+        .view {
+            display: none;
+        }
+        .view.active {
+            display: block;
+        }
+
+        /* Calendar Styling - Matches the image layout */
+        .calendar-container {
+            background-color: var(--pink-bg);
+            border: 4px solid var(--border-dark);
+            padding: 20px;
+            max-width: 800px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .calendar-inner {
+            background: white;
+            border: 8px solid var(--border-dark);
+            padding: 15px;
+        }
+
+        .year-section {
+            margin-bottom: 40px;
+        }
+
+        /* Unique colors for each year */
+        .year-2026 { color: #d81b60; }
+        .year-2027 { color: #2e7d32; }
+        .year-2028 { color: #1565c0; }
+
+        .year-title {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 10px 0 20px 0;
+        }
+
+        .months-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .months-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 480px) {
+            .months-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .month-box {
+            border: 2px solid var(--border-dark);
+            background-color: var(--calendar-pink);
+            padding: 5px;
+        }
+
+        .month-name {
+            text-align: center;
+            font-weight: bold;
+            font-size: 1rem;
+            padding: 5px 0;
+            border-bottom: 2px solid var(--border-dark);
+            text-transform: uppercase;
+            color: #000;
+        }
+
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-size: 0.8rem;
+        }
+
+        .day-header {
+            font-weight: bold;
+            padding: 5px 0;
+            border-bottom: 1px solid var(--border-dark);
+        }
+
+        .day-cell {
+            padding: 6px 0;
+            font-weight: bold;
+            color: #000;
+        }
+
+        .day-cell.valid-date {
+            cursor: pointer;
+        }
+        .day-cell.valid-date:hover {
+            background-color: var(--header-pink);
+            color: white;
+        }
+
+        .day-cell.disabled {
+            color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Booking Page Styling */
+        .booking-container {
+            background: white;
+            border: 4px solid var(--border-dark);
+            padding: 20px;
+            max-width: 500px;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .booking-header {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .counter-info {
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #d81b60;
+        }
+
+        .time-slots {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .time-slot-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background: #fafafa;
+            border-radius: 4px;
+        }
+
+        .time-label {
+            font-weight: bold;
+        }
+
+        .slot-actions button {
+            padding: 6px 12px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 3px;
+            margin-left: 5px;
+        }
+
+        .btn-book { background-color: #4caf50; color: white; }
+        .btn-unbook { background-color: #f44336; color: white; }
+        .btn-back { background-color: #555; color: white; padding: 10px 20px; border: none; cursor: pointer; font-weight: bold; }
+
+        .status-msg {
+            margin-top: 15px;
+            font-weight: bold;
+            min-height: 24px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>massage</h1>
+    <div class="decorative-heart">&mdash;&mdash;&mdash; &hearts; &mdash;&mdash;&mdash;</div>
+
+    <div id="calendarView" class="view active">
+        <div class="calendar-container">
+            <div class="calendar-inner" id="calendarApp">
+                </div>
+        </div>
+    </div>
+
+    <div id="bookingView" class="view">
+        <div class="booking-container">
+            <button class="btn-back" onclick="showCalendar()">&larr; Back to Calendar</button>
+            <div class="booking-header" id="selectedDateTitle">Selected Date</div>
+            <div class="counter-info" id="bookingCounter">Bookings context</div>
+            
+            <div class="time-slots" id="timeSlotsContainer">
+                </div>
+            
+            <div class="status-msg" id="statusMessage"></div>
+        </div>
+    </div>
+
+    <script>
+        // App State
+        let totalBookingsCount = 0;
+        const MAX_BOOKINGS = 22;
+        let selectedDateStr = ""; // Keep track of current viewing date
+        
+        // Data store to track bookings: { "YYYY-MM-DD": { "9:00 AM": true, "10:00 AM": false } }
+        const bookingRegistry = {}; 
+
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        const dayLabels = ["S", "M", "T", "W", "T", "F", "S"];
+
+        // Date bounds constraints
+        const startDate = new Date(2026, 6, 1);  // July 1, 2026 (Month is 0-indexed)
+        const endDate = new Date(2028, 6, 22); // July 22, 2028
+
+        // Render the system on load
+        window.onload = function() {
+            renderCalendarSystem();
+            updateCounterDisplay();
+        };
+
+        function renderCalendarSystem() {
+            const container = document.getElementById('calendarApp');
+            container.innerHTML = "";
+
+            // Loop through years 2026, 2027, 2028
+            for (let year = 2026; year <= 2028; year++) {
+                const yearSection = document.createElement('div');
+                yearSection.className = `year-section`;
+                
+                const yearTitle = document.createElement('div');
+                yearTitle.className = `year-title year-${year}`;
+                yearTitle.innerText = year;
+                yearSection.appendChild(yearTitle);
+
+                const monthsGrid = document.createElement('div');
+                monthsGrid.className = 'months-grid';
+
+                // Render all 12 months for layout structure matching the image
+                for (let month = 0; month < 12; month++) {
+                    const monthBox = createMonthBox(year, month);
+                    monthsGrid.appendChild(monthBox);
+                }
+
+                yearSection.appendChild(monthsGrid);
+                container.appendChild(yearSection);
+            }
+        }
+
+        function createMonthBox(year, month) {
+            const box = document.createElement('div');
+            box.className = 'month-box';
+
+            const name = document.createElement('div');
+            name.className = 'month-name';
+            name.innerText = monthNames[month];
+            box.appendChild(name);
+
+            const daysGrid = document.createElement('div');
+            daysGrid.className = 'days-grid';
+
+            // Day headers (S M T W T F S)
+            dayLabels.forEach(label => {
+                const head = document.createElement('div');
+                head.className = 'day-header';
+                head.innerText = label;
+                daysGrid.appendChild(head);
+            });
+
+            // Calculate dates
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const totalDays = new Date(year, month + 1, 0).getDate();
+
+            // Empty cells before start of month
+            for (let i = 0; i < firstDayIndex; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'day-cell';
+                daysGrid.appendChild(emptyCell);
+            }
+
+            // Days numbers
+            for (let day = 1; day <= totalDays; day++) {
+                const cell = document.createElement('div');
+                cell.className = 'day-cell';
+                cell.innerText = day;
+
+                const currentCellDate = new Date(year, month, day);
+
+                // Verify inside requested window constraints (2026/7/1 - 2028/7/22)
+                if (currentCellDate >= startDate && currentCellDate <= endDate) {
+                    cell.classList.add('valid-date');
+                    const dateString = `${year}-${String(month+1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    cell.onclick = () => openBookingPage(dateString, year, month, day);
+                } else {
+                    cell.classList.add('disabled');
+                }
+
+                daysGrid.appendChild(cell);
+            }
+
+            box.appendChild(daysGrid);
+            return box;
+        }
+
+        // View Navigation Functions
+        function openBookingPage(dateStr, year, month, day) {
+            selectedDateStr = dateStr;
+            document.getElementById('calendarView').classList.remove('active');
+            document.getElementById('bookingView').classList.add('active');
+            
+            document.getElementById('selectedDateTitle').innerText = `Bookings for ${monthNames[month]} ${day}, ${year}`;
+            document.getElementById('statusMessage').innerText = "";
+            
+            renderTimeSlots();
+        }
+
+        function showCalendar() {
+            document.getElementById('bookingView').classList.remove('active');
+            document.getElementById('calendarView').classList.add('active');
+        }
+
+        function updateCounterDisplay() {
+            document.getElementById('bookingCounter').innerText = `Total Appointments Booked: ${totalBookingsCount} / ${MAX_BOOKINGS}`;
+        }
+
+        // Time Slots Logic
+        function renderTimeSlots() {
+            const container = document.getElementById('timeSlotsContainer');
+            container.innerHTML = "";
+
+            // Generate slots from 9 AM to 9 PM with 1-hour intervals
+            const hours = [
+                "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", 
+                "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", 
+                "5:00 PM", "6:00 PM", "7:00 PM", "8:00 PM", "9:00 PM"
+            ];
+
+            if (!bookingRegistry[selectedDateStr]) {
+                bookingRegistry[selectedDateStr] = {};
+            }
+
+            hours.forEach(time => {
+                const isBooked = !!bookingRegistry[selectedDateStr][time];
+
+                const row = document.createElement('div');
+                row.className = 'time-slot-row';
+
+                const label = document.createElement('div');
+                label.className = 'time-label';
+                label.innerText = time;
+                row.appendChild(label);
+
+                const actions = document.createElement('div');
+                actions.className = 'slot-actions';
+
+                if (!isBooked) {
+                    const bookBtn = document.createElement('button');
+                    bookBtn.className = 'btn-book';
+                    bookBtn.innerText = 'Book';
+                    bookBtn.onclick = () => handleBook(time);
+                    actions.appendChild(bookBtn);
+                } else {
+                    const unbookBtn = document.createElement('button');
+                    unbookBtn.className = 'btn-unbook';
+                    unbookBtn.innerText = 'Unbook';
+                    unbookBtn.onclick = () => handleUnbook(time);
+                    actions.appendChild(unbookBtn);
+                }
+
+                row.appendChild(actions);
+                container.appendChild(row);
+            });
+        }
+
+        function handleBook(time) {
+            const statusMsg = document.getElementById('statusMessage');
+            
+            if (totalBookingsCount >= MAX_BOOKINGS) {
+                statusMsg.style.color = "red";
+                statusMsg.innerText = `Booking limit reached! You can only book up to ${MAX_BOOKINGS} times.`;
+                return;
+            }
+
+            bookingRegistry[selectedDateStr][time] = true;
+            totalBookingsCount++;
+            updateCounterDisplay();
+            renderTimeSlots();
+
+            statusMsg.style.color = "green";
+            statusMsg.innerText = `Successfully booked on ${selectedDateStr} at ${time}!`;
+        }
+
+        function handleUnbook(time) {
+            const statusMsg = document.getElementById('statusMessage');
+
+            if (bookingRegistry[selectedDateStr] && bookingRegistry[selectedDateStr][time]) {
+                bookingRegistry[selectedDateStr][time] = false;
+                totalBookingsCount--;
+                updateCounterDisplay();
+                renderTimeSlots();
+
+                statusMsg.style.color = "orange";
+                statusMsg.innerText = "The booking was canceled.";
+            }
+        }
+    </script>
+</body>
+</html>
